@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* index.css */
+body {
+    @apply font-body text-neutral-dark bg-neutral-light;
+  }
+  
+  h1, h2, h3 {
+    @apply font-headline;
+  }
+  
+  code, pre {
+    @apply font-mono bg-neutral-light text-sm p-2 rounded;
+  }
+  
