@@ -21,8 +21,12 @@ export default {
           light: "#f5f5f5",
           dark: "#333333",
         },
+        // Hier kommt das HF-Grün für den Hintergrund!
+        'hf-bg': '#7AAB8A',
+        'hf-yellow': '#D5B862',
       },
     },
   },
   plugins: [],
 };
+

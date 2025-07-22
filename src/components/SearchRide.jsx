@@ -1,6 +1,6 @@
-// src/components/SearchRide.jsx
 import React, { useState, useEffect } from "react";
-import api from "../api"; // ggf. Pfad anpassen
+import api from "../api";
+import Layout from "./Layout";
 
 function SearchRide() {
   const [fahrten, setFahrten] = useState([]);
@@ -11,10 +11,8 @@ function SearchRide() {
 
   const nutzer = localStorage.getItem("username") || "Gast";
 
-  // Fahrten vom Backend laden
   useEffect(() => {
     ladeFahrten();
-    // eslint-disable-next-line
   }, []);
 
   const ladeFahrten = async () => {
@@ -30,12 +28,10 @@ function SearchRide() {
     }
   };
 
-  // Mitfahrt buchen: Nutzer als Mitfahrer zu Fahrt hinzufügen
   const handleBuchen = async (id) => {
     try {
       const fahrt = fahrten.find(f => (f._id || f.id) === id);
       if (!fahrt) return;
-      // Wenn du ein eigenes /mitfahrer-Endpunkt hast, wäre das sauberer.
       const neueMitfahrer = [...fahrt.mitfahrer, nutzer];
       await api.put(`/fahrten/${id}`, { ...fahrt, mitfahrer: neueMitfahrer });
       ladeFahrten();
@@ -44,7 +40,6 @@ function SearchRide() {
     }
   };
 
-  // Buchung austragen: Nutzer aus Mitfahrer-Array entfernen
   const handleAustragen = async (id) => {
     try {
       const fahrt = fahrten.find(f => (f._id || f.id) === id);
@@ -57,7 +52,6 @@ function SearchRide() {
     }
   };
 
-  // Fahrten nach Start/Ziel filtern und sortieren
   const gefilterteFahrten = fahrten
     .filter((fahrt) => {
       if (!start && !ziel) return true;
@@ -85,7 +79,7 @@ function SearchRide() {
     const freiePlaetze = fahrt.maxMitfahrer - fahrt.mitfahrer.length;
 
     return (
-      <li className="border border-green-200 p-4 rounded shadow bg-white font-body">
+      <li className="border border-hf-green p-4 rounded shadow bg-white font-body">
         <p className="font-semibold font-headline text-lg text-primary-dark">
           {fahrt.start} → {fahrt.ziel}
         </p>
@@ -128,37 +122,39 @@ function SearchRide() {
   };
 
   return (
-    <div className="p-4 max-w-4xl mx-auto font-body">
-      <div className="mb-4">
-        <a href="/home" className="text-green-600 underline text-sm">
-          ← Zurück zur Übersicht
-        </a>
+    <Layout>
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] p-8 mt-10 border border-neutral-light">
+        <div className="mb-4">
+          <a href="/home" className="text-green-600 underline text-sm">
+            ← Zurück zur Übersicht
+          </a>
+        </div>
+        <h2 className="text-xl font-headline text-primary mb-6">Fahrt suchen</h2>
+        <input
+          className="border border-hf-green rounded px-3 py-2 mb-2 w-full"
+          placeholder="Startort oder Zwischenstopp"
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+        />
+        <input
+          className="border border-hf-green rounded px-3 py-2 mb-4 w-full"
+          placeholder="Zielort"
+          value={ziel}
+          onChange={(e) => setZiel(e.target.value)}
+        />
+        {loading && <p>Lade Fahrten...</p>}
+        {error && <p className="text-red-600">{error}</p>}
+        {gefilterteFahrten.length === 0 && !loading ? (
+          <p className="text-gray-600">Keine passenden Fahrten gefunden.</p>
+        ) : (
+          <ul className="space-y-4">
+            {gefilterteFahrten.map((fahrt) => (
+              <FahrtCard key={fahrt._id || fahrt.id} fahrt={fahrt} />
+            ))}
+          </ul>
+        )}
       </div>
-      <h2 className="text-xl font-bold text-green-700 mb-4">Fahrt suchen</h2>
-      <input
-        className="border rounded p-2 mb-2 w-full"
-        placeholder="Startort oder Zwischenstopp"
-        value={start}
-        onChange={(e) => setStart(e.target.value)}
-      />
-      <input
-        className="border rounded p-2 mb-4 w-full"
-        placeholder="Zielort"
-        value={ziel}
-        onChange={(e) => setZiel(e.target.value)}
-      />
-      {loading && <p>Lade Fahrten...</p>}
-      {error && <p className="text-red-600">{error}</p>}
-      {gefilterteFahrten.length === 0 && !loading ? (
-        <p className="text-gray-600">Keine passenden Fahrten gefunden.</p>
-      ) : (
-        <ul className="space-y-4">
-          {gefilterteFahrten.map((fahrt) => (
-            <FahrtCard key={fahrt._id || fahrt.id} fahrt={fahrt} />
-          ))}
-        </ul>
-      )}
-    </div>
+    </Layout>
   );
 }
 

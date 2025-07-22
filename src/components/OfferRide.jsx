@@ -1,7 +1,7 @@
-// src/components/OfferRide.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api"; // ggf. Pfad anpassen
+import api from "../api";
+import Layout from "./Layout";
 
 function OfferRide() {
   const [start, setStart] = useState("");
@@ -55,54 +55,57 @@ function OfferRide() {
   };
 
   return (
-    <div className="p-4">
-      <div className="mb-4">
-        <a href="/home" className="text-green-600 underline text-sm">
-          ← Zurück zur Übersicht
-        </a>
+    <Layout>
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] p-8 mt-10 border border-neutral-light">
+        <div className="mb-4">
+          <a href="/home" className="text-green-600 underline text-sm">
+            ← Zurück zur Übersicht
+          </a>
+        </div>
+        <h2 className="text-xl font-headline text-primary mb-6">Fahrt einstellen</h2>
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <input type="text" placeholder="Startort (mit Adresse)" className="w-full border border-hf-green rounded px-3 py-2" value={start} onChange={(e) => setStart(e.target.value)} required />
+          <input type="text" placeholder="Zielort" className="w-full border border-hf-green rounded px-3 py-2" value={ziel} onChange={(e) => setZiel(e.target.value)} required />
+          <input type="date" className="w-full border border-hf-green rounded px-3 py-2" value={datum} onChange={(e) => setDatum(e.target.value)} required />
+          <input type="time" className="w-full border border-hf-green rounded px-3 py-2" value={zeit} onChange={(e) => setZeit(e.target.value)} required />
+          <input type="number" placeholder="Max. Mitfahrer" min="1" className="w-full border border-hf-green rounded px-3 py-2" value={maxMitfahrer} onChange={(e) => setMaxMitfahrer(Number(e.target.value))} required />
+          <label className="flex items-center space-x-2">
+            <input type="checkbox" checked={gepaeck} onChange={(e) => setGepaeck(e.target.checked)} />
+            <span>Gepäck erlaubt?</span>
+          </label>
+          <p className="font-semibold mt-4">Zwischenstopps (optional):</p>
+          {zwischenstopps.map((z, idx) => (
+            <input
+              key={idx}
+              type="text"
+              placeholder={`Zwischenstopp ${idx + 1}`}
+              className="w-full border border-hf-green rounded px-3 py-2"
+              value={z}
+              onChange={(e) => {
+                const newZ = [...zwischenstopps];
+                newZ[idx] = e.target.value;
+                setZwischenstopps(newZ);
+              }}
+            />
+          ))}
+          <button type="button" className="text-green-700 underline" onClick={() => setZwischenstopps([...zwischenstopps, ""])}>
+            + weiteren Zwischenstopp hinzufügen
+          </button>
+          <button type="submit" className="block mt-4 bg-hf-yellow text-gray-900 px-4 py-2 rounded hover:bg-hf-green hover:text-white">
+            Fahrt speichern
+          </button>
+        </form>
+        {error && <p className="text-red-600 mt-2">{error}</p>}
+        {erfolgreichGespeichert && (
+          <label className="mt-4 flex items-center space-x-2 text-green-700">
+            <input type="checkbox" checked readOnly />
+            <span>Fahrt wurde erfolgreich gespeichert</span>
+          </label>
+        )}
       </div>
-      <h2 className="text-xl font-bold text-green-700 mb-4">Fahrt einstellen</h2>
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <input type="text" placeholder="Startort (mit Adresse)" className="w-full p-2 border rounded" value={start} onChange={(e) => setStart(e.target.value)} required />
-        <input type="text" placeholder="Zielort" className="w-full p-2 border rounded" value={ziel} onChange={(e) => setZiel(e.target.value)} required />
-        <input type="date" className="w-full p-2 border rounded" value={datum} onChange={(e) => setDatum(e.target.value)} required />
-        <input type="time" className="w-full p-2 border rounded" value={zeit} onChange={(e) => setZeit(e.target.value)} required />
-        <input type="number" placeholder="Max. Mitfahrer" min="1" className="w-full p-2 border rounded" value={maxMitfahrer} onChange={(e) => setMaxMitfahrer(Number(e.target.value))} required />
-        <label className="flex items-center space-x-2">
-          <input type="checkbox" checked={gepaeck} onChange={(e) => setGepaeck(e.target.checked)} />
-          <span>Gepäck erlaubt?</span>
-        </label>
-        <p className="font-semibold mt-4">Zwischenstopps (optional):</p>
-        {zwischenstopps.map((z, idx) => (
-          <input
-            key={idx}
-            type="text"
-            placeholder={`Zwischenstopp ${idx + 1}`}
-            className="w-full p-2 border rounded"
-            value={z}
-            onChange={(e) => {
-              const newZ = [...zwischenstopps];
-              newZ[idx] = e.target.value;
-              setZwischenstopps(newZ);
-            }}
-          />
-        ))}
-        <button type="button" className="text-green-700 underline" onClick={() => setZwischenstopps([...zwischenstopps, ""])}>
-          + weiteren Zwischenstopp hinzufügen
-        </button>
-        <button type="submit" className="block mt-4 bg-green-700 text-white px-4 py-2 rounded">
-          Fahrt speichern
-        </button>
-      </form>
-      {error && <p className="text-red-600 mt-2">{error}</p>}
-      {erfolgreichGespeichert && (
-        <label className="mt-4 flex items-center space-x-2 text-green-700">
-          <input type="checkbox" checked readOnly />
-          <span>Fahrt wurde erfolgreich gespeichert</span>
-        </label>
-      )}
-    </div>
+    </Layout>
   );
 }
 
 export default OfferRide;
+

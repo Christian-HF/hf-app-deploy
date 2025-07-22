@@ -1,7 +1,7 @@
-// src/components/Home.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../api"; // ggf. Pfad anpassen
+import api from "../api";
+import Layout from "./Layout";
 
 export default function Home() {
   const username = localStorage.getItem("username") || "User";
@@ -14,7 +14,6 @@ export default function Home() {
 
   useEffect(() => {
     ladeFahrten();
-    // eslint-disable-next-line
   }, []);
 
   const ladeFahrten = async () => {
@@ -50,7 +49,7 @@ export default function Home() {
   };
 
   const FahrtCard = ({ fahrt, kannBearbeiten = false }) => (
-    <li className="border border-green-200 p-4 rounded shadow bg-white font-body">
+    <li className="border border-hf-green p-4 rounded shadow bg-white font-body">
       <p className="font-semibold font-headline text-lg text-primary-dark">
         {fahrt.start} → {fahrt.ziel}
       </p>
@@ -68,7 +67,7 @@ export default function Home() {
       {kannBearbeiten && (
         <div className="flex gap-4 mt-2">
           <Link
-            to={`/edit/${fahrt._id || fahrt.id}`} // id kann _id oder id sein, je nach Backend
+            to={`/edit/${fahrt._id || fahrt.id}`}
             className="text-primary text-sm underline"
           >
             Bearbeiten
@@ -85,63 +84,60 @@ export default function Home() {
   );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto font-body">
-      <h1 className="text-2xl font-headline mb-4 text-primary-dark">
-        Hallo {username}, schön dass du da bist!
-      </h1>
-
-      <div className="flex gap-4 mb-8">
-        <Link to="/search" className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark">
-          Fahrt suchen & buchen
-        </Link>
-        <Link to="/offer" className="bg-accent text-gray-900 px-4 py-2 rounded hover:bg-green-300">
-          Neue Fahrt einstellen
-        </Link>
-      </div>
-
-      {loading && <p>Lade Fahrten...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Linke Seite – Top 20 */}
-        <div>
-          <h2 className="text-xl font-headline mb-2 text-primary-dark">🚗 Nächste anstehende Fahrten</h2>
-          {naechsteFahrten.length === 0 ? (
-            <p className="text-gray-600">Keine Fahrten gespeichert.</p>
-          ) : (
-            <ul className="space-y-3">
-              {naechsteFahrten.map(f => <FahrtCard key={f._id || f.id} fahrt={f} />)}
-            </ul>
-          )}
+    <Layout>
+      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] p-8 mt-10 border border-neutral-light">
+        <h1 className="text-2xl font-headline mb-4 text-primary-dark">
+          Hallo {username}, schön dass du da bist!
+        </h1>
+        <div className="flex gap-4 mb-8">
+          <Link to="/search" className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition">
+            Fahrt suchen & buchen
+          </Link>
+          <Link to="/offer" className="bg-hf-yellow text-gray-900 px-4 py-2 rounded hover:bg-hf-green hover:text-white transition">
+            Neue Fahrt einstellen
+          </Link>
         </div>
-
-        {/* Rechte Seite – Eigene & Gebuchte */}
-        <div>
-          <div className="border-b border-gray-300 pb-4 mb-4">
-            <h2 className="text-xl font-headline mb-2 text-primary-dark">📝 Deine eingestellten Fahrten</h2>
-            {meineFahrten.length === 0 ? (
-              <p className="text-gray-600">Du hast noch keine Fahrten erstellt.</p>
-            ) : (
-              <ul className="space-y-3">
-                {meineFahrten.map(f => (
-                  <FahrtCard key={f._id || f.id} fahrt={f} kannBearbeiten={true} />
-                ))}
-              </ul>
-            )}
-          </div>
-
+        {loading && <p>Lade Fahrten...</p>}
+        {error && <p className="text-red-600">{error}</p>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Linke Seite – Top 20 */}
           <div>
-            <h2 className="text-xl font-headline mb-2 text-primary-dark">🎟️ Deine gebuchten Fahrten</h2>
-            {gebuchteFahrten.length === 0 ? (
-              <p className="text-gray-600">Du hast noch keine Fahrten gebucht.</p>
+            <h2 className="text-xl font-headline mb-2 text-primary-dark">🚗 Nächste anstehende Fahrten</h2>
+            {naechsteFahrten.length === 0 ? (
+              <p className="text-gray-600">Keine Fahrten gespeichert.</p>
             ) : (
               <ul className="space-y-3">
-                {gebuchteFahrten.map(f => <FahrtCard key={f._id || f.id} fahrt={f} />)}
+                {naechsteFahrten.map(f => <FahrtCard key={f._id || f.id} fahrt={f} />)}
               </ul>
             )}
           </div>
+          {/* Rechte Seite – Eigene & Gebuchte */}
+          <div>
+            <div className="border-b border-gray-300 pb-4 mb-4">
+              <h2 className="text-xl font-headline mb-2 text-primary-dark">📝 Deine eingestellten Fahrten</h2>
+              {meineFahrten.length === 0 ? (
+                <p className="text-gray-600">Du hast noch keine Fahrten erstellt.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {meineFahrten.map(f => (
+                    <FahrtCard key={f._id || f.id} fahrt={f} kannBearbeiten={true} />
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div>
+              <h2 className="text-xl font-headline mb-2 text-primary-dark">🎟️ Deine gebuchten Fahrten</h2>
+              {gebuchteFahrten.length === 0 ? (
+                <p className="text-gray-600">Du hast noch keine Fahrten gebucht.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {gebuchteFahrten.map(f => <FahrtCard key={f._id || f.id} fahrt={f} />)}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }
