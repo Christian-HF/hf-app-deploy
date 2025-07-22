@@ -1,43 +1,63 @@
 // src/components/SearchRide.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import api from "../api"; // ggf. Pfad anpassen
 
-function SearchRide({ fahrten, setFahrten }) {
+function SearchRide() {
+  const [fahrten, setFahrten] = useState([]);
   const [start, setStart] = useState("");
   const [ziel, setZiel] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const nutzer = localStorage.getItem("username") || "Gast";
 
-  const handleBuchen = (id) => {
-    const updated = fahrten.map((fahrt) => {
-      if (
-        fahrt.id === id &&
-        !fahrt.mitfahrer.includes(nutzer) &&
-        fahrt.fahrer !== nutzer
-      ) {
-        return {
-          ...fahrt,
-          mitfahrer: [...fahrt.mitfahrer, nutzer],
-        };
-      }
-      return fahrt;
-    });
-    setFahrten(updated);
-    localStorage.setItem("fahrten", JSON.stringify(updated));
+  // Fahrten vom Backend laden
+  useEffect(() => {
+    ladeFahrten();
+    // eslint-disable-next-line
+  }, []);
+
+  const ladeFahrten = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get("/fahrten");
+      setFahrten(res.data);
+    } catch (err) {
+      setError("Fahrten konnten nicht geladen werden.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAustragen = (id) => {
-    const updated = fahrten.map((fahrt) => {
-      if (fahrt.id === id) {
-        return {
-          ...fahrt,
-          mitfahrer: fahrt.mitfahrer.filter((m) => m !== nutzer),
-        };
-      }
-      return fahrt;
-    });
-    setFahrten(updated);
-    localStorage.setItem("fahrten", JSON.stringify(updated));
+  // Mitfahrt buchen: Nutzer als Mitfahrer zu Fahrt hinzufügen
+  const handleBuchen = async (id) => {
+    try {
+      const fahrt = fahrten.find(f => (f._id || f.id) === id);
+      if (!fahrt) return;
+      // Wenn du ein eigenes /mitfahrer-Endpunkt hast, wäre das sauberer.
+      const neueMitfahrer = [...fahrt.mitfahrer, nutzer];
+      await api.put(`/fahrten/${id}`, { ...fahrt, mitfahrer: neueMitfahrer });
+      ladeFahrten();
+    } catch (err) {
+      alert("Fehler beim Buchen!");
+    }
   };
 
+  // Buchung austragen: Nutzer aus Mitfahrer-Array entfernen
+  const handleAustragen = async (id) => {
+    try {
+      const fahrt = fahrten.find(f => (f._id || f.id) === id);
+      if (!fahrt) return;
+      const neueMitfahrer = fahrt.mitfahrer.filter(m => m !== nutzer);
+      await api.put(`/fahrten/${id}`, { ...fahrt, mitfahrer: neueMitfahrer });
+      ladeFahrten();
+    } catch (err) {
+      alert("Fehler beim Austragen!");
+    }
+  };
+
+  // Fahrten nach Start/Ziel filtern und sortieren
   const gefilterteFahrten = fahrten
     .filter((fahrt) => {
       if (!start && !ziel) return true;
@@ -59,6 +79,7 @@ function SearchRide({ fahrten, setFahrten }) {
     .slice(0, 20);
 
   const FahrtCard = ({ fahrt }) => {
+    const id = fahrt._id || fahrt.id;
     const istGebucht = fahrt.mitfahrer.includes(nutzer);
     const istEigeneFahrt = fahrt.fahrer === nutzer;
     const freiePlaetze = fahrt.maxMitfahrer - fahrt.mitfahrer.length;
@@ -83,14 +104,14 @@ function SearchRide({ fahrten, setFahrten }) {
         {!istEigeneFahrt &&
           (istGebucht ? (
             <button
-              onClick={() => handleAustragen(fahrt.id)}
+              onClick={() => handleAustragen(id)}
               className="mt-2 text-red-600 underline"
             >
               Buchung stornieren
             </button>
           ) : freiePlaetze > 0 ? (
             <button
-              onClick={() => handleBuchen(fahrt.id)}
+              onClick={() => handleBuchen(id)}
               className="mt-2 text-green-600 underline"
             >
               Mitfahren
@@ -126,12 +147,14 @@ function SearchRide({ fahrten, setFahrten }) {
         value={ziel}
         onChange={(e) => setZiel(e.target.value)}
       />
-      {gefilterteFahrten.length === 0 ? (
+      {loading && <p>Lade Fahrten...</p>}
+      {error && <p className="text-red-600">{error}</p>}
+      {gefilterteFahrten.length === 0 && !loading ? (
         <p className="text-gray-600">Keine passenden Fahrten gefunden.</p>
       ) : (
         <ul className="space-y-4">
           {gefilterteFahrten.map((fahrt) => (
-            <FahrtCard key={fahrt.id} fahrt={fahrt} />
+            <FahrtCard key={fahrt._id || fahrt.id} fahrt={fahrt} />
           ))}
         </ul>
       )}

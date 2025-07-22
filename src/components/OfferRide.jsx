@@ -1,8 +1,9 @@
 // src/components/OfferRide.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../api"; // ggf. Pfad anpassen
 
-function OfferRide({ fahrten, setFahrten }) {
+function OfferRide() {
   const [start, setStart] = useState("");
   const [ziel, setZiel] = useState("");
   const [datum, setDatum] = useState("");
@@ -11,27 +12,28 @@ function OfferRide({ fahrten, setFahrten }) {
   const [gepaeck, setGepaeck] = useState(false);
   const [zwischenstopps, setZwischenstopps] = useState([""]);
   const [erfolgreichGespeichert, setErfolgreichGespeichert] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const nutzer = localStorage.getItem("username") || "Fahrer";
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
 
     if (!start || !ziel || !datum || !zeit || !maxMitfahrer) {
-      alert("Bitte alle Felder ausfüllen!");
+      setError("Bitte alle Felder ausfüllen!");
       return;
     }
 
     const jetzt = new Date();
     const fahrtDatum = new Date(`${datum}T${zeit}`);
     if (fahrtDatum < jetzt) {
-      alert("Bitte kein Datum in der Vergangenheit wählen.");
+      setError("Bitte kein Datum in der Vergangenheit wählen.");
       return;
     }
 
     const neueFahrt = {
-      id: Date.now(),
       start,
       ziel,
       datum,
@@ -43,13 +45,13 @@ function OfferRide({ fahrten, setFahrten }) {
       mitfahrer: [],
     };
 
-    const gespeicherte = JSON.parse(localStorage.getItem("fahrten")) || [];
-    const neueFahrten = [...gespeicherte, neueFahrt];
-
-    localStorage.setItem("fahrten", JSON.stringify(neueFahrten));
-    setFahrten(neueFahrten);
-    setErfolgreichGespeichert(true);
-    setTimeout(() => navigate("/home"), 1000);
+    try {
+      await api.post("/fahrten", neueFahrt);
+      setErfolgreichGespeichert(true);
+      setTimeout(() => navigate("/home"), 1000);
+    } catch (err) {
+      setError("Fehler beim Speichern!");
+    }
   };
 
   return (
@@ -92,6 +94,7 @@ function OfferRide({ fahrten, setFahrten }) {
           Fahrt speichern
         </button>
       </form>
+      {error && <p className="text-red-600 mt-2">{error}</p>}
       {erfolgreichGespeichert && (
         <label className="mt-4 flex items-center space-x-2 text-green-700">
           <input type="checkbox" checked readOnly />
@@ -103,4 +106,3 @@ function OfferRide({ fahrten, setFahrten }) {
 }
 
 export default OfferRide;
-

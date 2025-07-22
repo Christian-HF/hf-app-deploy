@@ -1,5 +1,7 @@
+// src/components/Home.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import api from "../api"; // ggf. Pfad anpassen
 
 export default function Home() {
   const username = localStorage.getItem("username") || "User";
@@ -7,32 +9,44 @@ export default function Home() {
   const [meineFahrten, setMeineFahrten] = useState([]);
   const [gebuchteFahrten, setGebuchteFahrten] = useState([]);
   const [naechsteFahrten, setNaechsteFahrten] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     ladeFahrten();
+    // eslint-disable-next-line
   }, []);
 
-  const ladeFahrten = () => {
-    const gespeicherte = JSON.parse(localStorage.getItem("fahrten")) || [];
-
-    const mitDatum = gespeicherte
-      .filter(f => f.datum && f.zeit)
-      .sort((a, b) => new Date(`${a.datum}T${a.zeit}`) - new Date(`${b.datum}T${b.zeit}`));
-
-    const top20 = mitDatum.slice(0, 20);
-    const eigene = gespeicherte.filter(f => f.fahrer === username);
-    const gebucht = gespeicherte.filter(f => (f.mitfahrer || []).includes(username));
-
-    setAlleFahrten(gespeicherte);
-    setMeineFahrten(eigene);
-    setGebuchteFahrten(gebucht);
-    setNaechsteFahrten(top20);
+  const ladeFahrten = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get("/fahrten");
+      const gespeicherte = res.data;
+      const mitDatum = gespeicherte
+        .filter(f => f.datum && f.zeit)
+        .sort((a, b) => new Date(`${a.datum}T${a.zeit}`) - new Date(`${b.datum}T${b.zeit}`));
+      const top20 = mitDatum.slice(0, 20);
+      const eigene = gespeicherte.filter(f => f.fahrer === username);
+      const gebucht = gespeicherte.filter(f => (f.mitfahrer || []).includes(username));
+      setAlleFahrten(gespeicherte);
+      setMeineFahrten(eigene);
+      setGebuchteFahrten(gebucht);
+      setNaechsteFahrten(top20);
+    } catch (err) {
+      setError("Fehler beim Laden der Fahrten");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const loeschen = (id) => {
-    const neueListe = alleFahrten.filter(f => f.id !== id);
-    localStorage.setItem("fahrten", JSON.stringify(neueListe));
-    ladeFahrten();
+  const loeschen = async (id) => {
+    try {
+      await api.delete(`/fahrten/${id}`);
+      ladeFahrten();
+    } catch (err) {
+      alert("Fehler beim Löschen!");
+    }
   };
 
   const FahrtCard = ({ fahrt, kannBearbeiten = false }) => (
@@ -46,24 +60,21 @@ export default function Home() {
       <p className="text-sm text-gray-500">
         Gepäck: {fahrt.gepaeck ? "✅" : "❌"} | Plätze: {fahrt.maxMitfahrer - (fahrt.mitfahrer?.length || 0)} frei
       </p>
-
-      {/* Mitfahrer anzeigen, wenn eigene Fahrt */}
       {kannBearbeiten && fahrt.mitfahrer.length > 0 && (
         <p className="text-sm text-gray-500 mt-1">
           Mitfahrer: {fahrt.mitfahrer.join(", ")}
         </p>
       )}
-
       {kannBearbeiten && (
         <div className="flex gap-4 mt-2">
           <Link
-            to={`/edit/${fahrt.id}`}
+            to={`/edit/${fahrt._id || fahrt.id}`} // id kann _id oder id sein, je nach Backend
             className="text-primary text-sm underline"
           >
             Bearbeiten
           </Link>
           <button
-            onClick={() => loeschen(fahrt.id)}
+            onClick={() => loeschen(fahrt._id || fahrt.id)}
             className="text-red-600 text-sm underline"
           >
             Löschen
@@ -88,6 +99,9 @@ export default function Home() {
         </Link>
       </div>
 
+      {loading && <p>Lade Fahrten...</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Linke Seite – Top 20 */}
         <div>
@@ -96,7 +110,7 @@ export default function Home() {
             <p className="text-gray-600">Keine Fahrten gespeichert.</p>
           ) : (
             <ul className="space-y-3">
-              {naechsteFahrten.map(f => <FahrtCard key={f.id} fahrt={f} />)}
+              {naechsteFahrten.map(f => <FahrtCard key={f._id || f.id} fahrt={f} />)}
             </ul>
           )}
         </div>
@@ -110,7 +124,7 @@ export default function Home() {
             ) : (
               <ul className="space-y-3">
                 {meineFahrten.map(f => (
-                  <FahrtCard key={f.id} fahrt={f} kannBearbeiten={true} />
+                  <FahrtCard key={f._id || f.id} fahrt={f} kannBearbeiten={true} />
                 ))}
               </ul>
             )}
@@ -122,7 +136,7 @@ export default function Home() {
               <p className="text-gray-600">Du hast noch keine Fahrten gebucht.</p>
             ) : (
               <ul className="space-y-3">
-                {gebuchteFahrten.map(f => <FahrtCard key={f.id} fahrt={f} />)}
+                {gebuchteFahrten.map(f => <FahrtCard key={f._id || f.id} fahrt={f} />)}
               </ul>
             )}
           </div>

@@ -1,19 +1,28 @@
 // src/components/EditRide.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import api from "../api"; // ggf. Pfad anpassen
 
-function EditRide({ fahrten, setFahrten }) {
+function EditRide() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [fahrt, setFahrt] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
 
+  // Fahrt vom Backend laden
   useEffect(() => {
-    const fahrtZuBearbeiten = fahrten.find((f) => f.id === Number(id));
-    if (fahrtZuBearbeiten) {
-      setFahrt({ ...fahrtZuBearbeiten });
-    }
-  }, [id, fahrten]);
+    const ladeFahrt = async () => {
+      setError(null);
+      try {
+        const res = await api.get(`/fahrten/${id}`);
+        setFahrt(res.data);
+      } catch (err) {
+        setError("Fahrt konnte nicht geladen werden.");
+      }
+    };
+    ladeFahrt();
+  }, [id]);
 
   const handleChange = (key, value) => {
     setFahrt({ ...fahrt, [key]: value });
@@ -29,21 +38,25 @@ function EditRide({ fahrten, setFahrten }) {
     setFahrt({ ...fahrt, zwischenstopps: [...fahrt.zwischenstopps, ""] });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     const jetzt = new Date();
     const fahrtDatum = new Date(`${fahrt.datum}T${fahrt.zeit}`);
     if (fahrtDatum < jetzt) {
-      alert("Bitte kein Datum in der Vergangenheit wählen.");
+      setError("Bitte kein Datum in der Vergangenheit wählen.");
       return;
     }
-    const updatedFahrten = fahrten.map((f) => (f.id === fahrt.id ? fahrt : f));
-    localStorage.setItem("fahrten", JSON.stringify(updatedFahrten));
-    setFahrten(updatedFahrten);
-    setSuccess(true);
-    setTimeout(() => navigate("/home"), 1000);
+    try {
+      await api.put(`/fahrten/${id}`, fahrt);
+      setSuccess(true);
+      setTimeout(() => navigate("/home"), 1000);
+    } catch (err) {
+      setError("Fahrt konnte nicht aktualisiert werden.");
+    }
   };
 
+  if (error) return <p className="p-4 text-red-600">{error}</p>;
   if (!fahrt) return <p className="p-4">Lade Daten...</p>;
 
   return (
