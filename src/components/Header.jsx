@@ -5,7 +5,7 @@ export default function Header({ username }) {
         <div className="w-10" /> 
         {/* Zentrierter App-Titel */}
         <div className="flex-1 flex justify-center">
-          <span className="font-headline text-2xl font-bold text-primary-dark tracking-wide">
+          <span className="font-headline text-3xl font-bold text-primary-dark tracking-wide">
             HF Mitfahrer APP
           </span>
         </div>

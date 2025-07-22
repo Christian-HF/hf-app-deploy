@@ -14,6 +14,7 @@ export default function Home() {
 
   useEffect(() => {
     ladeFahrten();
+    // eslint-disable-next-line
   }, []);
 
   const ladeFahrten = async () => {
@@ -48,40 +49,46 @@ export default function Home() {
     }
   };
 
-  const FahrtCard = ({ fahrt, kannBearbeiten = false }) => (
-    <li className="border border-hf-green p-4 rounded shadow bg-white font-body">
-      <p className="font-semibold font-headline text-lg text-primary-dark">
-        {fahrt.start} → {fahrt.ziel}
-      </p>
-      <p className="text-sm text-gray-600">
-        {fahrt.datum} um {fahrt.zeit} Uhr &nbsp;|&nbsp; 🚗 Fahrer: {fahrt.fahrer}
-      </p>
-      <p className="text-sm text-gray-500">
-        Gepäck: {fahrt.gepaeck ? "✅" : "❌"} | Plätze: {fahrt.maxMitfahrer - (fahrt.mitfahrer?.length || 0)} frei
-      </p>
-      {kannBearbeiten && fahrt.mitfahrer.length > 0 && (
-        <p className="text-sm text-gray-500 mt-1">
-          Mitfahrer: {fahrt.mitfahrer.join(", ")}
+  const FahrtCard = ({ fahrt, kannBearbeiten = false }) => {
+    const id = fahrt._id || fahrt.id;
+    return (
+      <li className="border border-hf-green p-4 rounded shadow bg-white font-body">
+        <Link
+          to={`/details/${id}`}
+          className="block text-lg font-headline text-primary-dark font-bold hover:underline"
+        >
+          {fahrt.start} → {fahrt.ziel}
+        </Link>
+        <p className="text-sm text-gray-600">
+          {fahrt.datum} um {fahrt.zeit} Uhr &nbsp;|&nbsp; 🚗 Fahrer: {fahrt.fahrer}
         </p>
-      )}
-      {kannBearbeiten && (
-        <div className="flex gap-4 mt-2">
-          <Link
-            to={`/edit/${fahrt._id || fahrt.id}`}
-            className="text-primary text-sm underline"
-          >
-            Bearbeiten
-          </Link>
-          <button
-            onClick={() => loeschen(fahrt._id || fahrt.id)}
-            className="text-red-600 text-sm underline"
-          >
-            Löschen
-          </button>
-        </div>
-      )}
-    </li>
-  );
+        <p className="text-sm text-gray-500">
+          Gepäck: {fahrt.gepaeck ? "✅" : "❌"} | Plätze: {fahrt.maxMitfahrer - (fahrt.mitfahrer?.length || 0)} frei
+        </p>
+        {kannBearbeiten && fahrt.mitfahrer.length > 0 && (
+          <p className="text-sm text-gray-500 mt-1">
+            Mitfahrer: {fahrt.mitfahrer.join(", ")}
+          </p>
+        )}
+        {kannBearbeiten && (
+          <div className="flex gap-4 mt-2">
+            <Link
+              to={`/edit/${id}`}
+              className="text-primary text-sm underline"
+            >
+              Bearbeiten
+            </Link>
+            <button
+              onClick={() => loeschen(id)}
+              className="text-red-600 text-sm underline"
+            >
+              Löschen
+            </button>
+          </div>
+        )}
+      </li>
+    );
+  };
 
   return (
     <Layout>
@@ -93,7 +100,7 @@ export default function Home() {
           <Link to="/search" className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition">
             Fahrt suchen & buchen
           </Link>
-          <Link to="/offer" className="bg-hf-yellow text-gray-900 px-4 py-2 rounded hover:bg-hf-green hover:text-white transition">
+          <Link to="/offer" className="bg-hf-yellow text-gray-900 px-4 py-2 rounded font-semibold hover:bg-[#bda751] transition">
             Neue Fahrt einstellen
           </Link>
         </div>

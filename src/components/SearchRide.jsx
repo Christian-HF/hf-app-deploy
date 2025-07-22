@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import Layout from "./Layout";
+import { Link } from "react-router-dom";
 
 function SearchRide() {
   const [fahrten, setFahrten] = useState([]);
@@ -80,11 +82,14 @@ function SearchRide() {
 
     return (
       <li className="border border-hf-green p-4 rounded shadow bg-white font-body">
-        <p className="font-semibold font-headline text-lg text-primary-dark">
+        <Link
+          to={`/details/${id}`}
+          className="block text-lg font-headline text-primary-dark font-bold hover:underline"
+        >
           {fahrt.start} → {fahrt.ziel}
-        </p>
+        </Link>
         <p className="text-sm text-gray-600">
-          {fahrt.datum} um {fahrt.zeit} Uhr &nbsp;|&nbsp; 🚗 Fahrer: {fahrt.fahrer}
+          {fahrt.datum} um {fahrt.zeit} Uhr &nbsp;|&nbsp; Fahrer: {fahrt.fahrer}
         </p>
         {fahrt.zwischenstopps.length > 0 && (
           <p className="text-sm text-gray-500">
@@ -94,7 +99,6 @@ function SearchRide() {
         <p className="text-sm text-gray-500">
           Gepäck: {fahrt.gepaeck ? "✅" : "❌"} | Plätze: {freiePlaetze} frei
         </p>
-
         {!istEigeneFahrt &&
           (istGebucht ? (
             <button
@@ -113,7 +117,6 @@ function SearchRide() {
           ) : (
             <p className="text-red-600 mt-2">Keine Plätze frei</p>
           ))}
-
         {istEigeneFahrt && (
           <p className="text-gray-500 italic mt-2">Eigene Fahrt</p>
         )}

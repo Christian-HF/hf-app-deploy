@@ -1,28 +1,23 @@
-import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-import Login from "./components/Login";
 import Home from "./components/Home";
-import SearchRide from "./components/SearchRide";
 import OfferRide from "./components/OfferRide";
 import EditRide from "./components/EditRide";
+import Login from "./components/Login";
+import SearchRide from "./components/SearchRide";
+import DetailsView from "./components/DetailsView";
 
 function App() {
-  const [fahrten, setFahrten] = useState([]);
-
-  useEffect(() => {
-    const gespeicherteFahrten = JSON.parse(localStorage.getItem("fahrten")) || [];
-    setFahrten(gespeicherteFahrten);
-  }, []);
-
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/home" element={<Home fahrten={fahrten} setFahrten={setFahrten} />} />
-        <Route path="/search" element={<SearchRide fahrten={fahrten} setFahrten={setFahrten} />} />
-        <Route path="/offer" element={<OfferRide fahrten={fahrten} setFahrten={setFahrten} />} />
-        <Route path="/edit/:id" element={<EditRide fahrten={fahrten} setFahrten={setFahrten} />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/search" element={<SearchRide />} />
+        <Route path="/offer" element={<OfferRide />} />
+        <Route path="/edit/:id" element={<EditRide />} />
+        <Route path="/details/:id" element={<DetailsView />} />
+        {/* Optional: 404 Page */}
+        <Route path="*" element={<div>Seite nicht gefunden</div>} />
       </Routes>
     </BrowserRouter>
   );
