@@ -55,7 +55,11 @@ export default function DetailsView() {
           </p>
         )}
         <div className="my-4">
-          <FahrtMap start={fahrt.start} ziel={fahrt.ziel} />
+          <FahrtMap
+              start={fahrt.start}
+              ziel={fahrt.ziel}
+              zwischenstopps={fahrt.zwischenstopps}
+          />
         </div>
       </div>
     </Layout>

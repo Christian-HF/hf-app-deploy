@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import ReactMapGL, { Marker, Source, Layer } from "react-map-gl";
 
-// Trage HIER deinen Mapbox Token ein
 const MAPBOX_TOKEN = "pk.eyJ1IjoiY2hyaXN0aWFud3MtaGYiLCJhIjoiY21kZWlyOGV1MDJzdTJrc2dub29ka2p3NSJ9.TQ5LnksSWzynrO3LdD7sQA";
 
 const defaultCoords = {
   Berlin: [13.405, 52.52],
   Hamburg: [9.993, 53.551],
   München: [11.582, 48.135],
-  // Weitere Städte als Fallback
+  // Weitere Städte …
 };
 
 async function geocode(address) {
@@ -24,14 +23,12 @@ async function geocode(address) {
   ) {
     return data.features[0].geometry.coordinates;
   }
-  // Fallback: Städte aus defaultCoords
   if (defaultCoords[address]) return defaultCoords[address];
   return null;
 }
 
-export default function FahrtMap({ start, ziel }) {
-  const [startCoords, setStartCoords] = useState(null);
-  const [zielCoords, setZielCoords] = useState(null);
+export default function FahrtMap({ start, ziel, zwischenstopps = [] }) {
+  const [coordsArray, setCoordsArray] = useState(null);
 
   // Interaktiver Viewport
   const [viewport, setViewport] = useState({
@@ -42,33 +39,33 @@ export default function FahrtMap({ start, ziel }) {
 
   useEffect(() => {
     let isMounted = true;
-    async function fetchCoords() {
-      const s = await geocode(start);
-      const z = await geocode(ziel);
-      if (isMounted) {
-        setStartCoords(s);
-        setZielCoords(z);
-      }
+    async function fetchAllCoords() {
+      // baue die Route in richtiger Reihenfolge: Start, ...Zwischenstopps, Ziel
+      const allPlaces = [start, ...zwischenstopps.filter(Boolean), ziel];
+      const promises = allPlaces.map(geocode);
+      const coords = await Promise.all(promises);
+      if (isMounted) setCoordsArray(coords);
     }
-    fetchCoords();
-    return () => {
-      isMounted = false;
-    };
-  }, [start, ziel]);
+    fetchAllCoords();
+    return () => { isMounted = false; };
+  }, [start, ziel, zwischenstopps]);
 
   // Update Map-Center, sobald Koordinaten bekannt
   useEffect(() => {
-    if (startCoords && zielCoords) {
+    if (coordsArray && coordsArray.length > 1 && coordsArray.every(Boolean)) {
+      // Berechne Center als Mittelwert
+      const lng = coordsArray.map(c => c[0]);
+      const lat = coordsArray.map(c => c[1]);
       setViewport(v => ({
         ...v,
-        latitude: (startCoords[1] + zielCoords[1]) / 2,
-        longitude: (startCoords[0] + zielCoords[0]) / 2,
-        zoom: 5.5
+        latitude: lat.reduce((a, b) => a + b, 0) / lat.length,
+        longitude: lng.reduce((a, b) => a + b, 0) / lng.length,
+        zoom: 5.5,
       }));
     }
-  }, [startCoords, zielCoords]);
+  }, [coordsArray]);
 
-  if (!startCoords || !zielCoords) {
+  if (!coordsArray || coordsArray.some(c => !c)) {
     return <div className="text-center text-gray-400">Lade Karte…</div>;
   }
 
@@ -76,12 +73,12 @@ export default function FahrtMap({ start, ziel }) {
     type: "Feature",
     geometry: {
       type: "LineString",
-      coordinates: [startCoords, zielCoords],
+      coordinates: coordsArray,
     },
   };
 
   return (
-    <div className="w-full max-w-4xl h-[620px] mx-auto rounded-xl overflow-hidden my-3 border border-gray-200 shadow-md">
+    <div className="w-full max-w-4xl h-[420px] mx-auto rounded-xl overflow-hidden my-3 border border-gray-200 shadow-md">
       <ReactMapGL
         {...viewport}
         width="100%"
@@ -90,19 +87,25 @@ export default function FahrtMap({ start, ziel }) {
         mapStyle="mapbox://styles/mapbox/streets-v11"
         onViewportChange={setViewport}
       >
-        {/* Start Marker */}
-        <Marker longitude={startCoords[0]} latitude={startCoords[1]}>
-          <div className="text-xs bg-white/90 rounded px-1 mt-1 text-green-800 font-bold border border-green-500 shadow">
-            {start}
-          </div>
-        </Marker>
-        {/* Ziel Marker */}
-        <Marker longitude={zielCoords[0]} latitude={zielCoords[1]}>
-          <div className="text-xs bg-white/90 rounded px-1 mt-1 text-red-700 font-bold border border-red-400 shadow">
-            {ziel}
-          </div>
-        </Marker>
-        {/* Route als Linie */}
+        {/* Marker für alle Orte */}
+        {coordsArray.map((coord, idx) => (
+          <Marker key={idx} longitude={coord[0]} latitude={coord[1]}>
+            <div className={`text-xs bg-white/90 rounded px-1 mt-1 font-bold border shadow
+              ${idx === 0
+                ? "text-green-800 border-green-500"
+                : idx === coordsArray.length - 1
+                ? "text-red-700 border-red-400"
+                : "text-blue-800 border-blue-400"}
+            `}>
+              {idx === 0
+                ? start
+                : idx === coordsArray.length - 1
+                ? ziel
+                : zwischenstopps[idx - 1]}
+            </div>
+          </Marker>
+        ))}
+        {/* Route */}
         <Source id="route" type="geojson" data={route}>
           <Layer
             id="route"
