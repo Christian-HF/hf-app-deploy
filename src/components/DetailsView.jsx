@@ -27,14 +27,14 @@ export default function DetailsView() {
 
   return (
     <Layout>
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] p-12 mt-14 border border-neutral-light">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] px-3 py-5 md:px-12 md:py-12 mt-4 md:mt-14 border border-neutral-light">
         <button
           onClick={() => navigate(-1)}
           className="mb-4 text-green-700 underline text-sm"
         >
           ← Zurück
         </button>
-        <h2 className="text-2xl font-headline mb-2 text-primary-dark">
+        <h2 className="text-xl md:text-2xl font-headline mb-2 text-primary-dark">
           {fahrt.start} → {fahrt.ziel}
         </h2>
         <p className="mb-1 text-gray-600">
@@ -56,9 +56,9 @@ export default function DetailsView() {
         )}
         <div className="my-4">
           <FahrtMap
-              start={fahrt.start}
-              ziel={fahrt.ziel}
-              zwischenstopps={fahrt.zwischenstopps}
+            start={fahrt.start}
+            ziel={fahrt.ziel}
+            zwischenstopps={fahrt.zwischenstopps}
           />
         </div>
       </div>

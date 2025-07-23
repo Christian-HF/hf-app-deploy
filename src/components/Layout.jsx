@@ -6,14 +6,15 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen bg-hf-bg font-body relative">
       <Header username={username} />
-      <div className="flex flex-col items-center justify-center min-h-screen pt-20">
+      {/* Padding je nach Gerät, Abstand nach oben für den Header */}
+      <div className="flex flex-col items-center justify-center min-h-screen pt-20 px-2 md:px-0">
         {children}
       </div>
-      {/* Weißes Logo unten rechts */}
+      {/* Logo immer unten rechts, auf Mobile etwas kleiner */}
       <img
         src={logo}
         alt="hochfrequenz logo"
-        className="absolute right-6 bottom-6 w-16 drop-shadow-lg"
+        className="fixed right-3 bottom-3 w-12 md:w-16 drop-shadow-lg pointer-events-none"
         style={{ zIndex: 10 }}
       />
     </div>

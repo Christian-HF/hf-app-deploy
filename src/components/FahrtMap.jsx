@@ -7,7 +7,6 @@ const defaultCoords = {
   Berlin: [13.405, 52.52],
   Hamburg: [9.993, 53.551],
   München: [11.582, 48.135],
-  // Weitere Städte …
 };
 
 async function geocode(address) {
@@ -40,7 +39,6 @@ export default function FahrtMap({ start, ziel, zwischenstopps = [] }) {
   useEffect(() => {
     let isMounted = true;
     async function fetchAllCoords() {
-      // baue die Route in richtiger Reihenfolge: Start, ...Zwischenstopps, Ziel
       const allPlaces = [start, ...zwischenstopps.filter(Boolean), ziel];
       const promises = allPlaces.map(geocode);
       const coords = await Promise.all(promises);
@@ -50,10 +48,9 @@ export default function FahrtMap({ start, ziel, zwischenstopps = [] }) {
     return () => { isMounted = false; };
   }, [start, ziel, zwischenstopps]);
 
-  // Update Map-Center, sobald Koordinaten bekannt
+  // Map-Center bei neuen Koordinaten
   useEffect(() => {
     if (coordsArray && coordsArray.length > 1 && coordsArray.every(Boolean)) {
-      // Berechne Center als Mittelwert
       const lng = coordsArray.map(c => c[0]);
       const lat = coordsArray.map(c => c[1]);
       setViewport(v => ({
@@ -78,7 +75,20 @@ export default function FahrtMap({ start, ziel, zwischenstopps = [] }) {
   };
 
   return (
-    <div className="w-full max-w-4xl h-[420px] mx-auto rounded-xl overflow-hidden my-3 border border-gray-200 shadow-md">
+    <div className="relative w-full max-w-4xl h-[260px] sm:h-[320px] md:h-[420px] mx-auto rounded-xl overflow-hidden my-3 border border-gray-200 shadow-md">
+      {/* Zoom-Buttons (mobil freundlich) */}
+      <div className="absolute top-3 right-3 z-10 flex flex-col gap-2">
+        <button
+          onClick={() => setViewport(v => ({ ...v, zoom: v.zoom + 0.5 }))}
+          className="bg-white rounded-full p-2 shadow text-lg font-bold border border-gray-300"
+          aria-label="Zoom in"
+        >+</button>
+        <button
+          onClick={() => setViewport(v => ({ ...v, zoom: v.zoom - 0.5 }))}
+          className="bg-white rounded-full p-2 shadow text-lg font-bold border border-gray-300"
+          aria-label="Zoom out"
+        >−</button>
+      </div>
       <ReactMapGL
         {...viewport}
         width="100%"
@@ -86,6 +96,12 @@ export default function FahrtMap({ start, ziel, zwischenstopps = [] }) {
         mapboxApiAccessToken={MAPBOX_TOKEN}
         mapStyle="mapbox://styles/mapbox/streets-v11"
         onViewportChange={setViewport}
+        dragPan={true}
+        scrollZoom={true}
+        touchZoom={true}
+        doubleClickZoom={true}
+        minZoom={2}
+        maxZoom={16}
       >
         {/* Marker für alle Orte */}
         {coordsArray.map((coord, idx) => (
@@ -122,3 +138,4 @@ export default function FahrtMap({ start, ziel, zwischenstopps = [] }) {
     </div>
   );
 }
+

@@ -14,7 +14,6 @@ export default function Home() {
 
   useEffect(() => {
     ladeFahrten();
-    // eslint-disable-next-line
   }, []);
 
   const ladeFahrten = async () => {
@@ -92,15 +91,15 @@ export default function Home() {
 
   return (
     <Layout>
-      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] p-8 mt-10 border border-neutral-light">
-        <h1 className="text-2xl font-headline mb-4 text-primary-dark">
+      <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] px-3 py-6 md:px-8 md:py-12 mt-4 md:mt-10 border border-neutral-light">
+        <h1 className="text-xl md:text-2xl font-headline mb-4 text-primary-dark">
           Hallo {username}, schön dass du da bist!
         </h1>
-        <div className="flex gap-4 mb-8">
-          <Link to="/search" className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-8">
+          <Link to="/search" className="w-full md:w-auto bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition text-center">
             Fahrt suchen & buchen
           </Link>
-          <Link to="/offer" className="bg-hf-yellow text-gray-900 px-4 py-2 rounded font-semibold hover:bg-[#bda751] transition">
+          <Link to="/offer" className="w-full md:w-auto bg-hf-yellow text-gray-900 px-4 py-2 rounded font-semibold hover:bg-[#bda751] transition text-center">
             Neue Fahrt einstellen
           </Link>
         </div>

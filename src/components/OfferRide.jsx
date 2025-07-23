@@ -1,111 +1,154 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import Layout from "./Layout";
 
-function OfferRide() {
-  const [start, setStart] = useState("");
-  const [ziel, setZiel] = useState("");
-  const [datum, setDatum] = useState("");
-  const [zeit, setZeit] = useState("");
-  const [maxMitfahrer, setMaxMitfahrer] = useState(1);
-  const [gepaeck, setGepaeck] = useState(false);
-  const [zwischenstopps, setZwischenstopps] = useState([""]);
-  const [erfolgreichGespeichert, setErfolgreichGespeichert] = useState(false);
-  const [error, setError] = useState(null);
+export default function OfferRide() {
+  const [form, setForm] = useState({
+    start: "",
+    ziel: "",
+    datum: "",
+    zeit: "",
+    maxMitfahrer: 3,
+    gepaeck: false,
+    zwischenstopps: [""],
+  });
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const fahrer = localStorage.getItem("username") || "";
 
-  const nutzer = localStorage.getItem("username") || "Fahrer";
+  const handleChange = e => {
+    const { name, value, type, checked } = e.target;
+    setForm(f => ({
+      ...f,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
 
-  const handleSubmit = async (e) => {
+  const handleZwischenstopp = (val, idx) => {
+    const arr = [...form.zwischenstopps];
+    arr[idx] = val;
+    setForm(f => ({ ...f, zwischenstopps: arr }));
+  };
+
+  const addZwischenstopp = () => setForm(f => ({
+    ...f, zwischenstopps: [...f.zwischenstopps, ""]
+  }));
+
+  const removeZwischenstopp = (idx) => setForm(f => ({
+    ...f,
+    zwischenstopps: f.zwischenstopps.filter((_, i) => i !== idx),
+  }));
+
+  const handleSubmit = async e => {
     e.preventDefault();
-    setError(null);
-
-    if (!start || !ziel || !datum || !zeit || !maxMitfahrer) {
-      setError("Bitte alle Felder ausfüllen!");
+    if (!form.start || !form.ziel || !form.datum || !form.zeit) {
+      setError("Bitte alle Pflichtfelder ausfüllen!");
       return;
     }
-
-    const jetzt = new Date();
-    const fahrtDatum = new Date(`${datum}T${zeit}`);
-    if (fahrtDatum < jetzt) {
-      setError("Bitte kein Datum in der Vergangenheit wählen.");
-      return;
-    }
-
-    const neueFahrt = {
-      start,
-      ziel,
-      datum,
-      zeit,
-      maxMitfahrer,
-      gepaeck,
-      zwischenstopps: zwischenstopps.filter(Boolean),
-      fahrer: nutzer,
-      mitfahrer: [],
-    };
-
     try {
-      await api.post("/fahrten", neueFahrt);
-      setErfolgreichGespeichert(true);
-      setTimeout(() => navigate("/home"), 1000);
-    } catch (err) {
-      setError("Fehler beim Speichern!");
+      await api.post("/fahrten", {
+        ...form,
+        fahrer,
+        mitfahrer: [],
+        zwischenstopps: form.zwischenstopps.filter(Boolean),
+      });
+      navigate("/home");
+    } catch {
+      setError("Speichern fehlgeschlagen!");
     }
   };
 
   return (
     <Layout>
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] p-8 mt-10 border border-neutral-light">
-        <div className="mb-4">
-          <a href="/home" className="text-green-600 underline text-sm">
-            ← Zurück zur Übersicht
-          </a>
-        </div>
-        <h2 className="text-xl font-headline text-primary mb-6">Fahrt einstellen</h2>
-        <form onSubmit={handleSubmit} className="space-y-2">
-          <input type="text" placeholder="Startort (mit Adresse)" className="w-full border border-hf-green rounded px-3 py-2" value={start} onChange={(e) => setStart(e.target.value)} required />
-          <input type="text" placeholder="Zielort" className="w-full border border-hf-green rounded px-3 py-2" value={ziel} onChange={(e) => setZiel(e.target.value)} required />
-          <input type="date" className="w-full border border-hf-green rounded px-3 py-2" value={datum} onChange={(e) => setDatum(e.target.value)} required />
-          <input type="time" className="w-full border border-hf-green rounded px-3 py-2" value={zeit} onChange={(e) => setZeit(e.target.value)} required />
-          <input type="number" placeholder="Max. Mitfahrer" min="1" className="w-full border border-hf-green rounded px-3 py-2" value={maxMitfahrer} onChange={(e) => setMaxMitfahrer(Number(e.target.value))} required />
-          <label className="flex items-center space-x-2">
-            <input type="checkbox" checked={gepaeck} onChange={(e) => setGepaeck(e.target.checked)} />
-            <span>Gepäck erlaubt?</span>
-          </label>
-          <p className="font-semibold mt-4">Zwischenstopps (optional):</p>
-          {zwischenstopps.map((z, idx) => (
+      <div className="w-full max-w-lg mx-auto bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] px-3 py-6 md:px-8 md:py-10 mt-8 border border-neutral-light">
+        <h2 className="text-xl md:text-2xl font-headline mb-4 text-primary-dark text-center">
+          Neue Fahrt einstellen
+        </h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input
+            className="border border-hf-green rounded px-3 py-2 w-full"
+            name="start"
+            placeholder="Startort"
+            value={form.start}
+            onChange={handleChange}
+          />
+          <input
+            className="border border-hf-green rounded px-3 py-2 w-full"
+            name="ziel"
+            placeholder="Zielort"
+            value={form.ziel}
+            onChange={handleChange}
+          />
+          <div className="flex gap-2 flex-col md:flex-row">
             <input
-              key={idx}
-              type="text"
-              placeholder={`Zwischenstopp ${idx + 1}`}
-              className="w-full border border-hf-green rounded px-3 py-2"
-              value={z}
-              onChange={(e) => {
-                const newZ = [...zwischenstopps];
-                newZ[idx] = e.target.value;
-                setZwischenstopps(newZ);
-              }}
+              type="date"
+              className="border border-hf-green rounded px-3 py-2 flex-1"
+              name="datum"
+              value={form.datum}
+              onChange={handleChange}
             />
+            <input
+              type="time"
+              className="border border-hf-green rounded px-3 py-2 flex-1"
+              name="zeit"
+              value={form.zeit}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="flex gap-2 flex-col md:flex-row">
+            <input
+              type="number"
+              min="1"
+              max="7"
+              className="border border-hf-green rounded px-3 py-2 flex-1"
+              name="maxMitfahrer"
+              value={form.maxMitfahrer}
+              onChange={handleChange}
+              placeholder="Max. Mitfahrer"
+            />
+            <label className="flex items-center gap-2 flex-1">
+              <input
+                type="checkbox"
+                className="accent-primary"
+                name="gepaeck"
+                checked={form.gepaeck}
+                onChange={handleChange}
+              />
+              Gepäck möglich?
+            </label>
+          </div>
+          {/* Zwischenstopps */}
+          {form.zwischenstopps.map((stopp, idx) => (
+            <div key={idx} className="flex gap-2 items-center">
+              <input
+                className="border border-hf-green rounded px-3 py-2 flex-1"
+                placeholder={`Zwischenstopp ${idx + 1}`}
+                value={stopp}
+                onChange={e => handleZwischenstopp(e.target.value, idx)}
+              />
+              {form.zwischenstopps.length > 1 && (
+                <button type="button" onClick={() => removeZwischenstopp(idx)}
+                  className="text-red-500 text-lg px-2">×</button>
+              )}
+            </div>
           ))}
-          <button type="button" className="text-green-700 underline" onClick={() => setZwischenstopps([...zwischenstopps, ""])}>
-            + weiteren Zwischenstopp hinzufügen
+          <button type="button"
+            onClick={addZwischenstopp}
+            className="text-primary hover:text-primary-dark text-sm underline self-end"
+          >
+            + Zwischenstopp hinzufügen
           </button>
-          <button type="submit" className="block mt-4 bg-hf-yellow text-gray-900 px-4 py-2 rounded hover:bg-hf-green hover:text-white">
+          {error && <p className="text-red-600 text-center">{error}</p>}
+          <button
+            type="submit"
+            className="w-full bg-primary text-white py-2 rounded font-semibold hover:bg-primary-dark transition"
+          >
             Fahrt speichern
           </button>
         </form>
-        {error && <p className="text-red-600 mt-2">{error}</p>}
-        {erfolgreichGespeichert && (
-          <label className="mt-4 flex items-center space-x-2 text-green-700">
-            <input type="checkbox" checked readOnly />
-            <span>Fahrt wurde erfolgreich gespeichert</span>
-          </label>
-        )}
       </div>
     </Layout>
   );
 }
-
-export default OfferRide;
 

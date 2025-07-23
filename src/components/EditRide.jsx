@@ -1,107 +1,179 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "../api";
 import Layout from "./Layout";
 
-function EditRide() {
+export default function EditRide() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [fahrt, setFahrt] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState(null);
+  const [form, setForm] = useState({
+    start: "",
+    ziel: "",
+    datum: "",
+    zeit: "",
+    maxMitfahrer: 3,
+    gepaeck: false,
+    zwischenstopps: [""],
+  });
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const ladeFahrt = async () => {
-      setError(null);
+    async function fetchFahrt() {
       try {
         const res = await api.get(`/fahrten/${id}`);
-        setFahrt(res.data);
-      } catch (err) {
+        // Wenn keine Zwischenstopps, immer als Array setzen!
+        setForm({
+          ...res.data,
+          zwischenstopps:
+            res.data.zwischenstopps && res.data.zwischenstopps.length > 0
+              ? res.data.zwischenstopps
+              : [""],
+        });
+      } catch {
         setError("Fahrt konnte nicht geladen werden.");
       }
-    };
-    ladeFahrt();
+    }
+    fetchFahrt();
   }, [id]);
 
-  const handleChange = (key, value) => {
-    setFahrt({ ...fahrt, [key]: value });
+  const handleChange = e => {
+    const { name, value, type, checked } = e.target;
+    setForm(f => ({
+      ...f,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  const handleZwischenstoppChange = (index, value) => {
-    const neueStopps = [...fahrt.zwischenstopps];
-    neueStopps[index] = value;
-    setFahrt({ ...fahrt, zwischenstopps: neueStopps });
+  const handleZwischenstopp = (val, idx) => {
+    const arr = [...form.zwischenstopps];
+    arr[idx] = val;
+    setForm(f => ({ ...f, zwischenstopps: arr }));
   };
 
-  const addZwischenstopp = () => {
-    setFahrt({ ...fahrt, zwischenstopps: [...fahrt.zwischenstopps, ""] });
-  };
+  const addZwischenstopp = () =>
+    setForm(f => ({
+      ...f,
+      zwischenstopps: [...f.zwischenstopps, ""],
+    }));
 
-  const handleSubmit = async (e) => {
+  const removeZwischenstopp = idx =>
+    setForm(f => ({
+      ...f,
+      zwischenstopps: f.zwischenstopps.filter((_, i) => i !== idx),
+    }));
+
+  const handleSubmit = async e => {
     e.preventDefault();
-    setError(null);
-    const jetzt = new Date();
-    const fahrtDatum = new Date(`${fahrt.datum}T${fahrt.zeit}`);
-    if (fahrtDatum < jetzt) {
-      setError("Bitte kein Datum in der Vergangenheit wählen.");
+    if (!form.start || !form.ziel || !form.datum || !form.zeit) {
+      setError("Bitte alle Pflichtfelder ausfüllen!");
       return;
     }
     try {
-      await api.put(`/fahrten/${id}`, fahrt);
-      setSuccess(true);
-      setTimeout(() => navigate("/home"), 1000);
-    } catch (err) {
-      setError("Fahrt konnte nicht aktualisiert werden.");
+      await api.put(`/fahrten/${id}`, {
+        ...form,
+        zwischenstopps: form.zwischenstopps.filter(Boolean),
+      });
+      navigate("/home");
+    } catch {
+      setError("Speichern fehlgeschlagen!");
     }
   };
 
-  if (error) return <p className="p-4 text-red-600">{error}</p>;
-  if (!fahrt) return <p className="p-4">Lade Daten...</p>;
-
   return (
     <Layout>
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] p-8 mt-10 border border-neutral-light">
-        <div className="mb-4">
-          <a href="/home" className="text-green-600 underline text-sm">← Zurück zur Übersicht</a>
-        </div>
-        <h2 className="text-xl font-headline text-primary mb-6">Fahrt bearbeiten</h2>
-        <form onSubmit={handleSubmit} className="space-y-2">
-          <input type="text" className="w-full border border-hf-green rounded px-3 py-2" value={fahrt.start} onChange={(e) => handleChange("start", e.target.value)} required />
-          <input type="text" className="w-full border border-hf-green rounded px-3 py-2" value={fahrt.ziel} onChange={(e) => handleChange("ziel", e.target.value)} required />
-          <input type="date" className="w-full border border-hf-green rounded px-3 py-2" value={fahrt.datum} onChange={(e) => handleChange("datum", e.target.value)} required />
-          <input type="time" className="w-full border border-hf-green rounded px-3 py-2" value={fahrt.zeit} onChange={(e) => handleChange("zeit", e.target.value)} required />
-          <input type="number" className="w-full border border-hf-green rounded px-3 py-2" value={fahrt.maxMitfahrer} onChange={(e) => handleChange("maxMitfahrer", Number(e.target.value))} required />
-          <label className="flex items-center space-x-2">
-            <input type="checkbox" checked={fahrt.gepaeck} onChange={(e) => handleChange("gepaeck", e.target.checked)} />
-            <span>Gepäck erlaubt?</span>
-          </label>
-          <p className="font-semibold mt-4">Zwischenstopps (optional):</p>
-          {fahrt.zwischenstopps.map((z, idx) => (
+      <div className="w-full max-w-lg mx-auto bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] px-3 py-6 md:px-8 md:py-10 mt-8 border border-neutral-light">
+        <h2 className="text-xl md:text-2xl font-headline mb-4 text-primary-dark text-center">
+          Fahrt bearbeiten
+        </h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input
+            className="border border-hf-green rounded px-3 py-2 w-full"
+            name="start"
+            placeholder="Startort"
+            value={form.start}
+            onChange={handleChange}
+          />
+          <input
+            className="border border-hf-green rounded px-3 py-2 w-full"
+            name="ziel"
+            placeholder="Zielort"
+            value={form.ziel}
+            onChange={handleChange}
+          />
+          <div className="flex gap-2 flex-col md:flex-row">
             <input
-              key={idx}
-              type="text"
-              className="w-full border border-hf-green rounded px-3 py-2"
-              value={z}
-              onChange={(e) => handleZwischenstoppChange(idx, e.target.value)}
+              type="date"
+              className="border border-hf-green rounded px-3 py-2 flex-1"
+              name="datum"
+              value={form.datum}
+              onChange={handleChange}
             />
+            <input
+              type="time"
+              className="border border-hf-green rounded px-3 py-2 flex-1"
+              name="zeit"
+              value={form.zeit}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="flex gap-2 flex-col md:flex-row">
+            <input
+              type="number"
+              min="1"
+              max="7"
+              className="border border-hf-green rounded px-3 py-2 flex-1"
+              name="maxMitfahrer"
+              value={form.maxMitfahrer}
+              onChange={handleChange}
+              placeholder="Max. Mitfahrer"
+            />
+            <label className="flex items-center gap-2 flex-1">
+              <input
+                type="checkbox"
+                className="accent-primary"
+                name="gepaeck"
+                checked={form.gepaeck}
+                onChange={handleChange}
+              />
+              Gepäck möglich?
+            </label>
+          </div>
+          {/* Zwischenstopps */}
+          {form.zwischenstopps.map((stopp, idx) => (
+            <div key={idx} className="flex gap-2 items-center">
+              <input
+                className="border border-hf-green rounded px-3 py-2 flex-1"
+                placeholder={`Zwischenstopp ${idx + 1}`}
+                value={stopp}
+                onChange={e => handleZwischenstopp(e.target.value, idx)}
+              />
+              {form.zwischenstopps.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeZwischenstopp(idx)}
+                  className="text-red-500 text-lg px-2"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           ))}
-          <button type="button" className="text-green-700 underline" onClick={addZwischenstopp}>
-            + weiteren Zwischenstopp hinzufügen
+          <button
+            type="button"
+            onClick={addZwischenstopp}
+            className="text-primary hover:text-primary-dark text-sm underline self-end"
+          >
+            + Zwischenstopp hinzufügen
           </button>
-          <button type="submit" className="block mt-4 bg-hf-yellow text-gray-900 px-4 py-2 rounded hover:bg-hf-green hover:text-white">
-            Änderungen speichern
+          {error && <p className="text-red-600 text-center">{error}</p>}
+          <button
+            type="submit"
+            className="w-full bg-primary text-white py-2 rounded font-semibold hover:bg-primary-dark transition"
+          >
+            Fahrt speichern
           </button>
         </form>
-        {success && (
-          <p className="text-green-600 mt-2">Fahrt wurde erfolgreich aktualisiert.</p>
-        )}
-        {error && (
-          <p className="text-red-600 mt-2">{error}</p>
-        )}
       </div>
     </Layout>
   );
 }
-
-export default EditRide;
-

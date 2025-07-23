@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import api from "../api";
 import Layout from "./Layout";
@@ -126,13 +125,13 @@ function SearchRide() {
 
   return (
     <Layout>
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] p-8 mt-10 border border-neutral-light">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-[0_6px_32px_0_rgba(100,100,100,0.18)] px-3 py-6 md:px-8 md:py-12 mt-4 md:mt-10 border border-neutral-light">
         <div className="mb-4">
           <a href="/home" className="text-green-600 underline text-sm">
             ← Zurück zur Übersicht
           </a>
         </div>
-        <h2 className="text-xl font-headline text-primary mb-6">Fahrt suchen</h2>
+        <h2 className="text-xl md:text-2xl font-headline text-primary mb-6">Fahrt suchen</h2>
         <input
           className="border border-hf-green rounded px-3 py-2 mb-2 w-full"
           placeholder="Startort oder Zwischenstopp"
