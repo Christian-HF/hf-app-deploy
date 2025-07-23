@@ -1,25 +1,27 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./components/Home";
+import SearchRide from "./components/SearchRide";
 import OfferRide from "./components/OfferRide";
 import EditRide from "./components/EditRide";
-import Login from "./components/Login";
-import SearchRide from "./components/SearchRide";
 import DetailsView from "./components/DetailsView";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import Profil from "./components/Profil";
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/home" element={<Home />} />
         <Route path="/search" element={<SearchRide />} />
         <Route path="/offer" element={<OfferRide />} />
         <Route path="/edit/:id" element={<EditRide />} />
         <Route path="/details/:id" element={<DetailsView />} />
-        {/* Optional: 404 Page */}
-        <Route path="*" element={<div>Seite nicht gefunden</div>} />
+        <Route path="/profil" element={<Profil />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 

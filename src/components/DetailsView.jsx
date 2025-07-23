@@ -54,6 +54,17 @@ export default function DetailsView() {
             Zwischenstopps: {fahrt.zwischenstopps.filter(Boolean).join(", ")}
           </p>
         )}
+        {/* === Hier werden alle Mitfahrer angezeigt === */}
+        {fahrt.mitfahrer && fahrt.mitfahrer.length > 0 && (
+          <div className="mb-2">
+            <b className="text-primary-dark">Mitfahrer:</b>
+            <ul className="ml-4 list-disc text-gray-700">
+              {fahrt.mitfahrer.map((m, i) => (
+                <li key={i}>{m}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="my-4">
           <FahrtMap
             start={fahrt.start}
@@ -65,4 +76,3 @@ export default function DetailsView() {
     </Layout>
   );
 }
-
