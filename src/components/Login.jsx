@@ -1,24 +1,28 @@
 import { useState } from "react";
 import Layout from "./Layout";
 import { useNavigate } from "react-router-dom";
+import api from "../api";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
-      setError("Bitte Benutzername und Passwort eingeben!");
-      return;
-    }
-    // Hier: Authentifizierung gegen das Backend aufbauen!
-    // Für Demo speichern wir nur Name ins LocalStorage:
-    localStorage.setItem("username", username);
     setError("");
-    navigate("/home");
+    try {
+      const res = await api.post("/auth/login", { email, password });
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("username", res.data.user.username);
+        localStorage.setItem("email", res.data.user.email);
+        navigate("/home");
+      }
+    } catch (err) {
+      setError(err?.response?.data?.error || "Fehler beim Login!");
+    }
   };
 
   return (
@@ -30,10 +34,11 @@ export default function Login() {
         <form onSubmit={handleLogin} className="w-full flex flex-col gap-4">
           <input
             className="border border-hf-green rounded px-3 py-2 w-full text-lg focus:outline-none focus:border-primary transition"
-            placeholder="Benutzername"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
+            placeholder="E-Mail"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
             autoFocus
+            type="email"
           />
           <input
             className="border border-hf-green rounded px-3 py-2 w-full text-lg focus:outline-none focus:border-primary transition"

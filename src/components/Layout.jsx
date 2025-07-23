@@ -1,5 +1,6 @@
-import Header from "./Header";
 import logo from "../assets/symbol_weiss.png";
+import Header from "./Header";
+
 
 export default function Layout({ children }) {
   const username = localStorage.getItem("username") || "";

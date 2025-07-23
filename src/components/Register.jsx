@@ -1,18 +1,20 @@
 import { useState } from "react";
 import Layout from "./Layout";
 import { useNavigate } from "react-router-dom";
+import api from "../api";
 
 export default function Register() {
-  const [form, setForm] = useState({ username: "", pw: "", pw2: "" });
+  const [form, setForm] = useState({ email: "", username: "", pw: "", pw2: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleChange = e =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    if (!form.username || !form.pw || !form.pw2) {
+    setError("");
+    if (!form.email || !form.username || !form.pw || !form.pw2) {
       setError("Bitte alles ausfüllen!");
       return;
     }
@@ -20,9 +22,21 @@ export default function Register() {
       setError("Passwörter stimmen nicht überein!");
       return;
     }
-    // Hier: Backend call für Registrierung
-    localStorage.setItem("username", form.username);
-    navigate("/home");
+    try {
+      const res = await api.post("/auth/register", {
+        email: form.email,
+        username: form.username,
+        password: form.pw,
+      });
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("username", res.data.user.username);
+        localStorage.setItem("email", res.data.user.email);
+        navigate("/home");
+      }
+    } catch (err) {
+      setError(err?.response?.data?.error || "Fehler bei der Registrierung!");
+    }
   };
 
   return (
@@ -32,6 +46,14 @@ export default function Register() {
           Registrierung
         </h1>
         <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
+          <input
+            name="email"
+            placeholder="E-Mail"
+            className="border border-hf-green rounded px-3 py-2 w-full"
+            value={form.email}
+            onChange={handleChange}
+            type="email"
+          />
           <input
             name="username"
             placeholder="Benutzername"
