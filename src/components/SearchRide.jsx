@@ -98,6 +98,29 @@ function SearchRide() {
         <p className="text-sm text-gray-500">
           Gepäck: {fahrt.gepaeck ? "✅" : "❌"} | Plätze: {freiePlaetze} frei
         </p>
+
+        {/* --- NEU: Gefahrene Autobahnen --- */}
+        {fahrt.autobahnen && fahrt.autobahnen.length > 0 && (
+          <div className="flex flex-wrap gap-2 my-1">
+            {fahrt.autobahnen.map((a, i) => (
+              <span key={i} className="bg-green-50 text-green-700 px-2 py-1 rounded-full text-xs font-mono border border-green-200">
+                {a}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* --- NEU: Ankunftszeit Ziel --- */}
+        {fahrt.ankunftszeiten && fahrt.ankunftszeiten.length > 0 && (
+          <div className="text-sm text-gray-600">
+            <b>Ankunft Ziel:</b>{" "}
+            {new Date(fahrt.ankunftszeiten[fahrt.ankunftszeiten.length - 1]).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit"
+            })}
+          </div>
+        )}
+
         {!istEigeneFahrt &&
           (istGebucht ? (
             <button
